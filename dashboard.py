@@ -256,7 +256,7 @@ def grafico_barras(df):
 
 
 # ==========================================
-# GRÁFICO POR DATA
+# GRÁFICO POR DATA (MÊS A MÊS)
 # ==========================================
 
 def grafico_data(df):
@@ -268,16 +268,15 @@ def grafico_data(df):
 
     despesas = despesas.copy()
 
-    despesas["data"] = (
-        pd.to_datetime(
+    # Converter texto para data
+    despesas["data"] = pd.to_datetime(
 
-            despesas["data"],
+        despesas["data"],
 
-            format="%d/%m/%Y"
-
-        )
+        format="%d/%m/%Y"
     )
 
+    # Agrupar por data
     gastos_data = (
 
         despesas
@@ -296,12 +295,13 @@ def grafico_data(df):
 
         gastos_data.index,
 
-        gastos_data.values
+        gastos_data.values,
 
+        marker="o"  # mostra bolinhas nos pontos
     )
 
     plt.xlabel(
-        "Data"
+        "Mês"
     )
 
     plt.ylabel(
@@ -312,9 +312,25 @@ def grafico_data(df):
         "Gastos por Data"
     )
 
+    # ==========================
+    # MOSTRAR TODOS OS MESES
+    # ==========================
+
+    plt.gca().xaxis.set_major_locator(
+        plt.matplotlib.dates.MonthLocator()
+    )
+
+    plt.gca().xaxis.set_major_formatter(
+        plt.matplotlib.dates.DateFormatter(
+            "%m/%Y"
+        )
+    )
+
     plt.xticks(
         rotation=45
     )
+
+    plt.grid()
 
     plt.tight_layout()
 
