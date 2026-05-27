@@ -1,0 +1,17 @@
+# Cache do Python
+__pycache__/
+*.pyc
+
+# Ambiente virtual
+.venv/
+venv/
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Dados pessoais do projeto
+dados.json
+
+# Arquivos Excel exportados
+*.xlsx
