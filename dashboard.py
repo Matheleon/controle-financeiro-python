@@ -2,16 +2,9 @@
 # DASHBOARD FINANCEIRO - DASHBOARD.PY
 # ==========================================
 
-# Biblioteca para trabalhar com tabelas
 import pandas as pd
-
-# Biblioteca para criar gráficos
 import matplotlib.pyplot as plt
-
-# Biblioteca para trabalhar com datas
 from datetime import datetime
-
-# Biblioteca para verificar arquivos
 import os
 
 
@@ -20,14 +13,9 @@ import os
 # ==========================================
 
 def carregar_dados():
-    """
-    Lê o arquivo dados.json
-    e transforma em DataFrame
-    """
 
     try:
 
-        # Lê JSON e converte para tabela
         df = pd.read_json(
             "dados.json"
         )
@@ -35,15 +23,19 @@ def carregar_dados():
         return df
 
     except FileNotFoundError:
+
         print(
             "\nArquivo dados.json não encontrado."
         )
+
         return None
 
     except ValueError:
+
         print(
             "\nArquivo JSON vazio."
         )
+
         return None
 
 
@@ -54,10 +46,14 @@ def carregar_dados():
 def mostrar_tabela(df):
 
     print(
-        "\n========== TABELA ==========\n"
+        "\n===== MOVIMENTAÇÕES =====\n"
     )
 
-    print(df)
+    print(
+        df.to_string(
+            index=False
+        )
+    )
 
 
 # ==========================================
@@ -66,60 +62,100 @@ def mostrar_tabela(df):
 
 def mostrar_estatisticas(df):
 
-    print(
-        "\n========== ESTATÍSTICAS ==========\n"
-    )
-
     receitas = df[
         df["tipo"] == "receita"
-    ]["valor"].sum()
+    ]
 
     despesas = df[
         df["tipo"] == "despesa"
-    ]["valor"].sum()
+    ]
 
-    saldo = receitas - despesas
+    total_receitas = receitas[
+        "valor"
+    ].sum()
 
-    media = df["valor"].mean()
+    total_despesas = despesas[
+        "valor"
+    ].sum()
 
-    maior = df["valor"].max()
-
-    menor = df["valor"].min()
-
-    print(
-        f"Receitas: R$ {receitas:.2f}"
+    saldo = (
+        total_receitas
+        - total_despesas
     )
 
-    print(
-        f"Despesas: R$ {despesas:.2f}"
+    maior_receita = (
+
+        receitas["valor"].max()
+
+        if not receitas.empty
+
+        else 0
     )
 
-    print(
-        f"Saldo: R$ {saldo:.2f}"
+    maior_despesa = (
+
+        despesas["valor"].max()
+
+        if not despesas.empty
+
+        else 0
     )
 
-    print(
-        f"Média: R$ {media:.2f}"
-    )
+    quantidade = len(df)
 
-    print(
-        f"Maior movimentação: R$ {maior:.2f}"
-    )
+    print(f"""
+===== ESTATÍSTICAS =====
 
-    print(
-        f"Menor movimentação: R$ {menor:.2f}"
-    )
+Total de Receitas:
+R$ {total_receitas:.2f}
+
+Total de Despesas:
+R$ {total_despesas:.2f}
+
+Saldo Atual:
+R$ {saldo:.2f}
+
+Maior Receita:
+R$ {maior_receita:.2f}
+
+Maior Despesa:
+R$ {maior_despesa:.2f}
+
+Quantidade de Movimentações:
+{quantidade}
+""")
 
 
 # ==========================================
-# FILTRAR DESPESAS
+# APENAS DESPESAS
 # ==========================================
 
 def apenas_despesas(df):
 
     return df[
-        df["tipo"] == "despesa"
+        df["tipo"]
+        == "despesa"
     ]
+
+
+# ==========================================
+# VALIDAR DESPESAS
+# ==========================================
+
+def validar_despesas(df):
+
+    despesas = apenas_despesas(df)
+
+    if despesas.empty:
+
+        print(
+            "\nNão existem despesas "
+            "para gerar gráficos."
+        )
+
+        return None
+
+    return despesas
 
 
 # ==========================================
@@ -128,7 +164,10 @@ def apenas_despesas(df):
 
 def grafico_pizza(df):
 
-    despesas = apenas_despesas(df)
+    despesas = validar_despesas(df)
+
+    if despesas is None:
+        return
 
     gastos_categoria = (
 
@@ -168,7 +207,10 @@ def grafico_pizza(df):
 
 def grafico_barras(df):
 
-    despesas = apenas_despesas(df)
+    despesas = validar_despesas(df)
+
+    if despesas is None:
+        return
 
     gastos_categoria = (
 
@@ -219,9 +261,13 @@ def grafico_barras(df):
 
 def grafico_data(df):
 
-    despesas = apenas_despesas(df)
+    despesas = validar_despesas(df)
 
-    # transforma texto em data
+    if despesas is None:
+        return
+
+    despesas = despesas.copy()
+
     despesas["data"] = (
         pd.to_datetime(
 
@@ -259,7 +305,7 @@ def grafico_data(df):
     )
 
     plt.ylabel(
-        "Valor Gasto"
+        "Gasto (R$)"
     )
 
     plt.title(
@@ -276,19 +322,87 @@ def grafico_data(df):
 
 
 # ==========================================
-# EXPORTAR PARA EXCEL
+# EVOLUÇÃO DO SALDO
+# ==========================================
+
+def grafico_saldo(df):
+
+    df = df.copy()
+
+    df["data"] = pd.to_datetime(
+
+        df["data"],
+
+        format="%d/%m/%Y"
+    )
+
+    df = df.sort_values(
+        by="data"
+    )
+
+    saldo = 0
+    saldos = []
+
+    for _, linha in df.iterrows():
+
+        if linha["tipo"] == "receita":
+
+            saldo += linha["valor"]
+
+        else:
+
+            saldo -= linha["valor"]
+
+        saldos.append(
+            saldo
+        )
+
+    plt.figure(
+        figsize=(10, 5)
+    )
+
+    plt.plot(
+
+        df["data"],
+
+        saldos
+    )
+
+    plt.xlabel(
+        "Data"
+    )
+
+    plt.ylabel(
+        "Saldo (R$)"
+    )
+
+    plt.title(
+        "Evolução do Saldo"
+    )
+
+    plt.xticks(
+        rotation=45
+    )
+
+    plt.tight_layout()
+
+    plt.show()
+
+
+# ==========================================
+# EXPORTAR EXCEL
 # ==========================================
 
 def exportar_excel(df):
 
     resposta = input(
-        "\nDeseja exportar para Excel? (s/n): "
+        "\nDeseja exportar "
+        "para Excel? (s/n): "
     ).lower()
 
     if resposta != "s":
         return
 
-    # gera data/hora
     agora = datetime.now()
 
     data_exportacao = (
@@ -304,25 +418,77 @@ def exportar_excel(df):
         + data_exportacao
 
         + ".xlsx"
-
     )
 
-    # exporta Excel
-    df.to_excel(
+    receitas = df[
+        df["tipo"] == "receita"
+    ]["valor"].sum()
 
-        nome_arquivo,
+    despesas = df[
+        df["tipo"] == "despesa"
+    ]["valor"].sum()
 
-        index=False
-
+    saldo = (
+        receitas - despesas
     )
+
+    resumo = pd.DataFrame({
+
+        "Métrica": [
+
+            "Receitas",
+            "Despesas",
+            "Saldo"
+        ],
+
+        "Valor": [
+
+            receitas,
+            despesas,
+            saldo
+        ]
+    })
+
+    with pd.ExcelWriter(
+        nome_arquivo
+    ) as writer:
+
+        df.to_excel(
+
+            writer,
+
+            sheet_name=
+            "Movimentações",
+
+            index=False
+        )
+
+        resumo.to_excel(
+
+            writer,
+
+            sheet_name=
+            "Resumo",
+
+            index=False
+        )
 
     print(
-        f"\nArquivo exportado: {nome_arquivo}"
+        f"\nArquivo exportado: "
+        f"{nome_arquivo}"
     )
+    abrir = input(
+        "\nDeseja abrir o arquivo? (s/n): "
+    ).lower()
 
+    if abrir == "s":
+
+        os.startfile(
+            nome_arquivo
+        )
 
 # ==========================================
-# MENU DE GRÁFICOS
+# MENU GRÁFICOS
 # ==========================================
 
 def menu_graficos(df):
@@ -330,13 +496,14 @@ def menu_graficos(df):
     while True:
 
         print("""
-========== GRÁFICOS ==========
+===== GRÁFICOS =====
 
 1 - Pizza
 2 - Barras por Categoria
 3 - Gastos por Data
-4 - Todos
-5 - Voltar
+4 - Evolução do Saldo
+5 - Todos
+6 - Voltar
         """)
 
         opcao = input(
@@ -357,54 +524,82 @@ def menu_graficos(df):
 
         elif opcao == "4":
 
-            grafico_pizza(df)
-
-            grafico_barras(df)
-
-            grafico_data(df)
+            grafico_saldo(df)
 
         elif opcao == "5":
+
+            grafico_pizza(df)
+            grafico_barras(df)
+            grafico_data(df)
+            grafico_saldo(df)
+
+        elif opcao == "6":
+
             break
 
         else:
+
             print(
                 "Opção inválida."
             )
 
 
 # ==========================================
-# PROGRAMA PRINCIPAL
+# MENU DASHBOARD
 # ==========================================
 
 def iniciar_dashboard():
 
-    # carrega tabela
     df = carregar_dados()
 
     if df is None:
         return
 
-    # mostra tabela
-    mostrar_tabela(df)
+    while True:
 
-    # mostra estatísticas
-    mostrar_estatisticas(df)
+        print("""
+===== DASHBOARD =====
 
-    # perguntar gráficos
-    resposta = input(
-        "\nDeseja visualizar gráficos? (s/n): "
-    ).lower()
+1 - Ver Tabela
+2 - Estatísticas
+3 - Gráficos
+4 - Exportar Excel
+5 - Voltar
+        """)
 
-    if resposta == "s":
+        opcao = input(
+            "Escolha: "
+        )
 
-        menu_graficos(df)
+        if opcao == "1":
 
-    # perguntar exportação
-    exportar_excel(df)
+            mostrar_tabela(df)
 
-    print(
-        "\nDashboard encerrado."
-    )
+        elif opcao == "2":
+
+            mostrar_estatisticas(df)
+
+        elif opcao == "3":
+
+            menu_graficos(df)
+
+        elif opcao == "4":
+
+            exportar_excel(df)
+
+        elif opcao == "5":
+
+            print(
+                "\nFechando dashboard..."
+            )
+
+            break
+
+        else:
+
+            print(
+                "\nOpção inválida."
+            )
 
 
 # ==========================================

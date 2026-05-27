@@ -28,13 +28,22 @@ CATEGORIAS = {
 def carregar_dados():
 
     try:
-        with open("dados.json", "r", encoding="utf-8") as arquivo:
-            return json.load(arquivo)
 
-    except FileNotFoundError:
-        return []
+        with open(
+            "dados.json",
+            "r",
+            encoding="utf-8"
+        ) as arquivo:
 
-    except json.JSONDecodeError:
+            return json.load(
+                arquivo
+            )
+
+    except (
+        FileNotFoundError,
+        json.JSONDecodeError
+    ):
+
         return []
 
 
@@ -44,92 +53,22 @@ def carregar_dados():
 
 def salvar_dados(dados):
 
-    with open("dados.json", "w", encoding="utf-8") as arquivo:
+    with open(
+        "dados.json",
+        "w",
+        encoding="utf-8"
+    ) as arquivo:
 
         json.dump(
+
             dados,
+
             arquivo,
+
             indent=4,
+
             ensure_ascii=False
         )
-
-
-# ==========================================
-# VALIDAR DATA
-# ==========================================
-
-def validar_data():
-
-    while True:
-
-        data = input(
-            "Digite a data (dd/mm/aaaa): "
-        )
-
-        try:
-            datetime.strptime(
-                data,
-                "%d/%m/%Y"
-            )
-
-            return data
-
-        except ValueError:
-            print(
-                "Data inválida."
-            )
-
-
-# ==========================================
-# VALIDAR VALOR
-# ==========================================
-
-def validar_valor():
-
-    while True:
-
-        try:
-            valor = float(
-                input(
-                    "Digite o valor: R$ "
-                )
-            )
-
-            if valor <= 0:
-                print(
-                    "Digite valor maior que zero."
-                )
-                continue
-
-            return valor
-
-        except ValueError:
-            print(
-                "Digite um número válido."
-            )
-
-
-# ==========================================
-# ESCOLHER CATEGORIA
-# ==========================================
-
-def escolher_categoria():
-
-    while True:
-
-        print("\nCategorias:")
-
-        for chave, valor in CATEGORIAS.items():
-            print(f"{chave} - {valor}")
-
-        opcao = input(
-            "Escolha categoria: "
-        )
-
-        if opcao in CATEGORIAS:
-            return CATEGORIAS[opcao]
-
-        print("Categoria inválida.")
 
 
 # ==========================================
@@ -139,38 +78,278 @@ def escolher_categoria():
 def adicionar_movimentacao(dados):
 
     print(
-        "\n===== ADICIONAR ====="
+        "\n===== ADICIONAR MOVIMENTAÇÃO ====="
     )
+
+    etapa = 1
+
+    tipo = None
+    categoria = None
+    valor = None
+    data = None
+    descricao = None
 
     while True:
 
-        tipo = input(
-            "Tipo (receita/despesa): "
-        ).lower()
+        # ==================================
+        # ETAPA 1 - TIPO
+        # ==================================
 
-        if tipo in [
-            "receita",
-            "despesa"
-        ]:
+        if etapa == 1:
+
+            print("""
+===== TIPO =====
+
+1 - Receita
+2 - Despesa
+
+v - voltar menu
+s - sair
+            """)
+
+            entrada = input(
+                "Escolha: "
+            ).lower()
+
+            if entrada == "v":
+                return
+
+            if entrada == "s":
+
+                print(
+                    "Operação cancelada."
+                )
+
+                return
+
+            if entrada == "1":
+
+                tipo = "receita"
+
+                # receita vai direto
+                # para valor
+                etapa = 3
+
+            elif entrada == "2":
+
+                tipo = "despesa"
+
+                # despesa precisa
+                # escolher categoria
+                etapa = 2
+
+            else:
+
+                print(
+                    "Opção inválida."
+                )
+
+        # ==================================
+        # ETAPA 2 - CATEGORIA
+        # (SÓ DESPESA)
+        # ==================================
+
+        elif etapa == 2:
+
+            print(
+                "\n===== CATEGORIAS ====="
+            )
+
+            for chave, valor_cat in (
+                CATEGORIAS.items()
+            ):
+
+                print(
+                    f"{chave} - {valor_cat}"
+                )
+
+            print("\nv - voltar")
+            print("s - sair")
+
+            entrada = input(
+                "\nEscolha categoria: "
+            ).lower()
+
+            if entrada == "v":
+
+                etapa = 1
+                continue
+
+            if entrada == "s":
+
+                print(
+                    "Operação cancelada."
+                )
+
+                return
+
+            if entrada in CATEGORIAS:
+
+                categoria = (
+                    CATEGORIAS[
+                        entrada
+                    ]
+                )
+
+                etapa = 3
+
+            else:
+
+                print(
+                    "Categoria inválida."
+                )
+
+        # ==================================
+        # ETAPA 3 - VALOR
+        # ==================================
+
+        elif etapa == 3:
+
+            entrada = input(
+                "\nDigite valor "
+                "(ou v/s): R$ "
+            ).lower()
+
+            if entrada == "v":
+
+                # receita volta
+                # para tipo
+                if tipo == "receita":
+                    etapa = 1
+
+                # despesa volta
+                # para categoria
+                else:
+                    etapa = 2
+
+                continue
+
+            if entrada == "s":
+
+                print(
+                    "Operação cancelada."
+                )
+
+                return
+
+            try:
+
+                valor = float(
+                    entrada
+                )
+
+                if valor <= 0:
+
+                    print(
+                        "Valor deve ser "
+                        "maior que zero."
+                    )
+
+                    continue
+
+                etapa = 4
+
+            except ValueError:
+
+                print(
+                    "Digite um "
+                    "número válido."
+                )
+
+        # ==================================
+        # ETAPA 4 - DATA
+        # ==================================
+
+        elif etapa == 4:
+
+            entrada = input(
+                "\nData "
+                "(dd/mm/aaaa)"
+                " ou v/s: "
+            ).lower()
+
+            if entrada == "v":
+
+                etapa = 3
+                continue
+
+            if entrada == "s":
+
+                print(
+                    "Operação cancelada."
+                )
+
+                return
+
+            try:
+
+                datetime.strptime(
+
+                    entrada,
+
+                    "%d/%m/%Y"
+                )
+
+                data = entrada
+
+                etapa = 5
+
+            except ValueError:
+
+                print(
+                    "Data inválida."
+                )
+
+        # ==================================
+        # ETAPA 5 - DESCRIÇÃO
+        # ==================================
+
+        elif etapa == 5:
+
+            entrada = input(
+                "\nDescrição "
+                "(ou v/s): "
+            )
+
+            if entrada.lower() == "v":
+
+                etapa = 4
+                continue
+
+            if entrada.lower() == "s":
+
+                print(
+                    "Operação cancelada."
+                )
+
+                return
+
+            descricao = entrada
+
             break
 
-        print("Tipo inválido.")
+    # ==================================
+    # RECEITA NÃO TEM CATEGORIA
+    # ==================================
 
-    categoria = escolher_categoria()
+    if tipo == "receita":
 
-    valor = validar_valor()
+        categoria = "Receita"
 
-    data = validar_data()
-
-    descricao = input(
-        "Descrição: "
-    )
+    # ==================================
+    # SALVAR
+    # ==================================
 
     movimentacao = {
+
         "tipo": tipo,
+
         "categoria": categoria,
+
         "valor": valor,
+
         "data": data,
+
         "descricao": descricao
     }
 
@@ -178,11 +357,15 @@ def adicionar_movimentacao(dados):
         movimentacao
     )
 
-    salvar_dados(dados)
+    salvar_dados(
+        dados
+    )
 
     print(
-        "Movimentação salva!"
+        "\nMovimentação salva "
+        "com sucesso!"
     )
+
 
 
 # ==========================================
@@ -192,9 +375,11 @@ def adicionar_movimentacao(dados):
 def ver_movimentacoes(dados):
 
     if not dados:
+
         print(
             "\nNenhuma movimentação."
         )
+
         return
 
     print(
@@ -207,7 +392,9 @@ def ver_movimentacoes(dados):
     ):
 
         print(f"""
-{i}
+====================
+
+Movimentação #{i}
 
 Tipo:
 {item["tipo"]}
@@ -223,44 +410,90 @@ Data:
 
 Descrição:
 {item["descricao"]}
-        """)
+
+====================
+""")
 
 
 # ==========================================
-# FILTRAR
+# FILTRAR MOVIMENTAÇÕES
 # ==========================================
 
 def filtrar_movimentacoes(dados):
 
     if not dados:
+
         print(
-            "Sem dados."
+            "\nSem dados."
         )
+
         return
 
     print("""
-1 - Filtrar por categoria
-2 - Filtrar por mês
+===== FILTROS =====
+
+1 - Categoria
+2 - Mês
+3 - Voltar
     """)
 
     opcao = input(
         "Escolha: "
     )
 
+    # =====================
+    # FILTRAR CATEGORIA
+    # =====================
+
     if opcao == "1":
 
+        print(
+            "\nCategorias:"
+        )
+
+        for chave, categoria in (
+            CATEGORIAS.items()
+        ):
+
+            print(
+                f"{chave} - "
+                f"{categoria}"
+            )
+
+        categoria_opcao = input(
+            "\nEscolha categoria: "
+        )
+
+        if categoria_opcao not in (
+            CATEGORIAS
+        ):
+
+            print(
+                "Categoria inválida."
+            )
+
+            return
+
         categoria = (
-            escolher_categoria()
+            CATEGORIAS[
+                categoria_opcao
+            ]
         )
 
         resultados = [
 
-            item for item in dados
+            item
+
+            for item in dados
 
             if item[
                 "categoria"
             ] == categoria
         ]
+
+    # =====================
+    # FILTRAR MÊS
+    # =====================
 
     elif opcao == "2":
 
@@ -270,20 +503,37 @@ def filtrar_movimentacoes(dados):
 
         resultados = [
 
-            item for item in dados
+            item
 
-            if item["data"][3:5]
-            == mes
+            for item in dados
+
+            if item[
+                "data"
+            ][3:5] == mes
         ]
 
-    else:
-        print("Inválido.")
+    elif opcao == "3":
+
         return
 
-    if not resultados:
+    else:
+
         print(
-            "Nada encontrado."
+            "Opção inválida."
         )
+
+        return
+
+    # =====================
+    # RESULTADOS
+    # =====================
+
+    if not resultados:
+
+        print(
+            "\nNenhum resultado."
+        )
+
         return
 
     print(
@@ -326,7 +576,7 @@ def resumo_financeiro(dados):
     )
 
     print(f"""
-===== RESUMO =====
+===== RESUMO FINANCEIRO =====
 
 Receitas:
 R$ {receitas:.2f}
@@ -336,7 +586,7 @@ R$ {despesas:.2f}
 
 Saldo:
 R$ {saldo:.2f}
-    """)
+""")
 
 
 # ==========================================
@@ -346,7 +596,7 @@ R$ {saldo:.2f}
 def abrir_dashboard():
 
     print(
-        "Abrindo dashboard..."
+        "\nAbrindo dashboard..."
     )
 
     os.system(
@@ -380,35 +630,45 @@ def menu():
         )
 
         if opcao == "1":
+
             adicionar_movimentacao(
                 dados
             )
 
         elif opcao == "2":
+
             ver_movimentacoes(
                 dados
             )
 
         elif opcao == "3":
+
             filtrar_movimentacoes(
                 dados
             )
 
         elif opcao == "4":
+
             resumo_financeiro(
                 dados
             )
 
         elif opcao == "5":
+
             abrir_dashboard()
 
         elif opcao == "6":
-            print("Saindo...")
+
+            print(
+                "\nSaindo..."
+            )
+
             break
 
         else:
+
             print(
-                "Opção inválida."
+                "\nOpção inválida."
             )
 
 
@@ -417,4 +677,5 @@ def menu():
 # ==========================================
 
 if __name__ == "__main__":
+
     menu()
