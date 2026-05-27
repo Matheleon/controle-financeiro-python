@@ -123,8 +123,6 @@ Permite identificar onde o dinheiro está sendo gasto.
 
 ![Gráfico Barras](images/grafico-barras.png)
 
----
-
 ### 📊 Gastos por Data
 
 Ajuda a identificar períodos com maiores despesas.
@@ -142,8 +140,8 @@ Mostra o crescimento ou redução do saldo ao longo do tempo.
 **Exemplo:**
 
 ![Gráfico Saldo](images/grafico-saldo.png)
-
 ---
+
 
 ### ✅ Exportação Excel
 
